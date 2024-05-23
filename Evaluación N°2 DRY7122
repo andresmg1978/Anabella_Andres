@@ -1,0 +1,60 @@
+import requests
+import json
+
+def get_distance_and_duration(origin, destination, token):
+    url = f"https://graphhopper.com/api/1/route"
+    params = {
+        "point": [origin, destination],
+        "vehicle": "car",
+        "locale": "en",
+        "instructions": "true",
+        "calc_points": "true",
+        "key": token
+    }
+
+    response = requests.get(url, params=params)
+    data = response.json()
+
+    distance_km = data['paths'][0]['distance'] / 1000
+    time_seconds = data['paths'][0]['time'] / 1000
+    time_hours = int(time_seconds // 3600)
+    time_minutes = int((time_seconds % 3600) // 60)
+    time_seconds = int(time_seconds % 60)
+
+    fuel_consumption = (distance_km / 100) * 8  # Asumiendo un consumo de 8 litros cada 100 km
+
+    narrative = []
+    for instruction in data['paths'][0]['instructions']:
+        narrative.append(instruction['text'])
+
+    return distance_km, time_hours, time_minutes, time_seconds, fuel_consumption, narrative
+
+def main():
+    token = "3cd6c80f-288e-495f-9777-b50ec08795a8"
+
+    while True:
+        origin = input("Ciudad de Origen: ")
+        destination = input("Ciudad de Destino: ")
+
+        if origin.lower() == "santiago" and destination.lower() == "ovalle":
+            origin_coords = "-33.4489,-70.6693"
+            destination_coords = "-30.6015,-71.1999"
+        else:
+            print("Solo se soporta Santiago a Ovalle en este momento.")
+            continue
+
+        distance_km, time_hours, time_minutes, time_seconds, fuel_consumption, narrative = get_distance_and_duration(origin_coords, destination_coords, token)
+
+        print(f"Distancia: {distance_km:.2f} km")
+        print(f"Duración: {time_hours} horas, {time_minutes} minutos, {time_seconds} segundos")
+        print(f"Combustible requerido: {fuel_consumption:.2f} litros")
+        print("Narrativa del viaje:")
+        for step in narrative:
+            print(f"- {step}")
+
+        exit_program = input("Presiona 'q' para salir o cualquier otra tecla para realizar otra consulta: ")
+        if exit_program.lower() == 'q':
+            break
+
+if __name__ == "__main__":
+    main()
